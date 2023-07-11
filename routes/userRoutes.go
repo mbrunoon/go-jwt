@@ -1,7 +1,13 @@
 package routes
 
-import "github.com/gin-gonic/gin"
+import (
+	"go-jwt/middleware"
 
-func UserRoutes(e *gin.Engine) {
+	"github.com/gin-gonic/gin"
+)
+
+func UserRoutes(incommingRoutes *gin.Engine) {
+
+	incommingRoutes.Use(middleware.Authenticate())
 
 }
