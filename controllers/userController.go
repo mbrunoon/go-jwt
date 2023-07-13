@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"go-jwt/database"
 	helper "go-jwt/helpers"
 	"go-jwt/models"
@@ -12,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -33,6 +35,7 @@ func Signup() gin.HandlerFunc {
 		var user models.User
 		if err := c.BindJSON(&user); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			defer cancel()
 			return
 		}
 
@@ -57,6 +60,24 @@ func Signup() gin.HandlerFunc {
 		if countEmail > 0 || countPhone > 0 {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "This email or phone number already exists"})
 		}
+
+		user.CreatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+		user.UpdatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+		user.ID = primitive.NewObjectID()
+		user.UserID = user.ID.Hex()
+
+		token, refreshToken, _ := helper.GenerateAllTokens(user.Email, user.FirstName, user.LastName, user.UserType, user.UserID)
+		user.Token = token
+		user.RefreshToken = refreshToken
+
+		resultInsertionNumber, insertErr := userCollection.InsertOne(ctx, user)
+		if insertErr != nil {
+			msg := fmt.Sprint("User item was not created")
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": msg})
+			return
+		}
+		defer cancel()
+		c.JSON(http.StatusOK, resultInsertionNumber)
 	}
 }
 
