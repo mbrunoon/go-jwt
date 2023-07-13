@@ -15,16 +15,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var userCollection *mongo.Collection = database.OpenCollection(database.Client, "user")
 var validate = validator.New()
 
 func HashPassword() {
-
-}
-
-func VerifyPassword() {
 
 }
 
@@ -81,8 +78,38 @@ func Signup() gin.HandlerFunc {
 	}
 }
 
-func Login() {
+func Login() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		var user models.User
+		var foundUser models.User
 
+		if err := c.BindJSON(&user); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			defer cancel()
+			return
+		}
+
+		err := userCollection.FindOne(ctx, bson.M{"email": &user.Email}).Decode(&foundUser)
+		defer cancel()
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "email or password is incorrect"})
+		}
+
+		passwordIsValid, msg := VerifyPassword(user.Password, foundUser.Password)
+		defer cancel()
+	}
+}
+
+func VerifyPassword(userPassword string, providedPassword string) (bool, string) {
+	err := bcrypt.CompareHashAndPassword([]byte(userPassword), []byte(providedPassword))
+	check := true
+	msg := ""
+	if err != nil {
+		check = false
+		msg := "email or password is incorrect"
+	}
+	return check, msg
 }
 
 func GetUser() gin.HandlerFunc {
