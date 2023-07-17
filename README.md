@@ -10,7 +10,8 @@ Videos by [Akhil Sharma](https://www.youtube.com/@AkhilSharmaTech)
 [Part 2: Creating Database and Controller and Routes especifications](https://www.youtube.com/watch?v=LCWrfrsZARo)
 [Part 3: Creating GetUser and SignUp methods](https://www.youtube.com/watch?v=8nUKNJqgYLo)
 [Part 4: Creating tokenHelper, add login and verify password methods to userController](https://www.youtube.com/watch?v=uaydySiRU9M)
-[Part 5: in progress](https://www.youtube.com/watch?v=kCCdf0Ytcts)
+[Part 5: Creating GetUsers method](https://www.youtube.com/watch?v=kCCdf0Ytcts)
+[Part 6: in progress](https://www.youtube.com/watch?v=dHSs4XSkCdk)
 
 # Tools Used
 
