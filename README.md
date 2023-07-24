@@ -6,12 +6,12 @@
 
 Videos by [Akhil Sharma](https://www.youtube.com/@AkhilSharmaTech)
 
-[Part 1: Building App structure, User Model and Routes](https://www.youtube.com/watch?v=X5BmktFrAlo)
-[Part 2: Creating Database and Controller and Routes especifications](https://www.youtube.com/watch?v=LCWrfrsZARo)
-[Part 3: Creating GetUser and SignUp methods](https://www.youtube.com/watch?v=8nUKNJqgYLo)
-[Part 4: Creating tokenHelper, add login and verify password methods to userController](https://www.youtube.com/watch?v=uaydySiRU9M)
-[Part 5: Creating GetUsers method](https://www.youtube.com/watch?v=kCCdf0Ytcts)
-[Part 6: Bugfixes](https://www.youtube.com/watch?v=dHSs4XSkCdk)
+1. [Building App structure, User Model and Routes](https://www.youtube.com/watch?v=X5BmktFrAlo)
+2. [Creating Database and Controller and Routes especifications](https://www.youtube.com/watch?v=LCWrfrsZARo)
+3. [Creating GetUser and SignUp methods](https://www.youtube.com/watch?v=8nUKNJqgYLo)
+4. [Creating tokenHelper, add login and verify password methods to userController](https://www.youtube.com/watch?v=uaydySiRU9M)
+5. [Creating GetUsers method](https://www.youtube.com/watch?v=kCCdf0Ytcts)
+6. [Bugfixes](https://www.youtube.com/watch?v=dHSs4XSkCdk)
 
 # Tools Used
 
