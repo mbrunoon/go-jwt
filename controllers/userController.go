@@ -23,7 +23,7 @@ var userCollection *mongo.Collection = database.OpenCollection(database.Client, 
 var validate = validator.New()
 
 func HashPassword(password string) string {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,8 +53,8 @@ func Signup() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while checking for the users"})
 		}
 
-		password := HashPassword(user.Password)
-		user.Password = &password
+		password := HashPassword(*user.Password)
+		*user.Password = password
 
 		countPhone, err := userCollection.CountDocuments(ctx, bson.M{"phone": user.Phone})
 		defer cancel()
@@ -71,9 +71,9 @@ func Signup() gin.HandlerFunc {
 		user.ID = primitive.NewObjectID()
 		user.UserID = user.ID.Hex()
 
-		token, refreshToken, _ := helper.GenerateAllTokens(user.Email, user.FirstName, user.LastName, user.UserType, user.UserID)
-		user.Token = token
-		user.RefreshToken = refreshToken
+		token, refreshToken, _ := helper.GenerateAllTokens(*user.Email, *user.FirstName, *user.LastName, *user.UserType, user.UserID)
+		user.Token = &token
+		user.RefreshToken = &refreshToken
 
 		resultInsertionNumber, insertErr := userCollection.InsertOne(ctx, user)
 		if insertErr != nil {
@@ -100,22 +100,26 @@ func Login() gin.HandlerFunc {
 
 		err := userCollection.FindOne(ctx, bson.M{"email": &user.Email}).Decode(&foundUser)
 		defer cancel()
+
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "email or password is incorrect"})
+			return
 		}
 
-		passwordIsValid, msg := VerifyPassword(user.Password, foundUser.Password)
+		passwordIsValid, msg := VerifyPassword(*user.Password, *foundUser.Password)
 		defer cancel()
 
 		if passwordIsValid != true {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": msg})
+			return
 		}
 
 		if foundUser.Email == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "email or password is incorrect"})
+			return
 		}
 
-		token, refreshToken, _ := helper.GenerateAllTokens(foundUser.Email, foundUser.FirstName, foundUser.LastName, foundUser.UserType, foundUser.UserID)
+		token, refreshToken, _ := helper.GenerateAllTokens(*foundUser.Email, *foundUser.FirstName, *foundUser.LastName, *foundUser.UserType, foundUser.UserID)
 		helper.UpdateAllTokens(token, refreshToken, foundUser.UserID)
 
 		err = userCollection.FindOne(ctx, bson.M{"userId": foundUser.UserID}).Decode(&foundUser)
@@ -130,13 +134,15 @@ func Login() gin.HandlerFunc {
 	}
 }
 
-func VerifyPassword(userPassword string, providedPassword string) (bool, string) {
-	err := bcrypt.CompareHashAndPassword([]byte(userPassword), []byte(providedPassword))
+func VerifyPassword(providedPassword string, hashedPassword string) (bool, string) {
+
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(providedPassword))
 	check := true
 	msg := ""
+
 	if err != nil {
 		check = false
-		msg := "email or password is incorrect"
+		msg = "email or password is incorrect"
 	}
 	return check, msg
 }
@@ -152,11 +158,13 @@ func GetUser() gin.HandlerFunc {
 
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 		var user models.User
-		err := userCollection.FindOne(ctx, bson.M{"user_id": userId}).Decode(&user)
+		err := userCollection.FindOne(ctx, bson.M{"userid": userId}).Decode(&user)
 		defer cancel()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
+
 		c.JSON(http.StatusOK, user)
 	}
 
@@ -164,7 +172,8 @@ func GetUser() gin.HandlerFunc {
 
 func GetUsers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if helper.CheckUserType(c, "ADMIN"); err != nil {
+
+		if err := helper.CheckUserType(c, "ADMIN"); err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
@@ -187,17 +196,15 @@ func GetUsers() gin.HandlerFunc {
 		matchState := bson.D{{"$match", bson.D{{}}}}
 		groupStage := bson.D{
 			{"$group", bson.D{
-				{"_id", bson.D{
-					{"_id", "null"},
-					{"total_count", bson.D{{"$sum", 1}}},
-					{"data", "$push", "$$ROOT"},
-				},
-				}},
-			},
+				{"_id", bson.D{{"_id", "null"}}},
+				{"total_count", bson.D{{"$sum", 1}}},
+				{"data", bson.D{{"$push", "$$ROOT"}}},
+			}},
 		}
+
 		projectStage := bson.D{
 			{"$project", bson.D{
-				{"_id": 0},
+				{"_id", 0},
 				{"total_count", 1},
 				{"user_items", bson.D{
 					{"$slice", []interface{}{"$data", startIndex, recordPerPage}},
